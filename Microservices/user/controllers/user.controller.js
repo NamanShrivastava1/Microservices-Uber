@@ -81,6 +81,12 @@ module.exports.logoutUser = async (req, res) => {
   try {
     const token = req.cookies.token;
 
+    if (!token) {
+      return res
+        .status(400)
+        .json({ message: "No token found. User Alreay logged out" });
+    }
+
     await blacklistTokenModel.create({ token });
 
     res.clearCookie("token");
