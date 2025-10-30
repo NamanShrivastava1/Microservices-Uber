@@ -1,4 +1,5 @@
 const userModel = require("../models/user.model");
+const blacklistTokenModel = require("../models/blacklisttoken.model");
 const jwt = require("jsonwebtoken");
 
 module.exports.userAuth = async (req, res, next) => {
@@ -9,6 +10,11 @@ module.exports.userAuth = async (req, res, next) => {
       return res
         .status(401)
         .json({ message: "Access Denied. No token provided." });
+    }
+
+    const isBlacklisted = await blacklistTokenModel.findOne({ token });
+    if (isBlacklisted) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

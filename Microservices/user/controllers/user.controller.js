@@ -14,7 +14,7 @@ module.exports.registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new userModel.create({
+    const newUser = await userModel.create({
       name,
       email,
       password: hashedPassword,
@@ -26,7 +26,11 @@ module.exports.registerUser = async (req, res) => {
 
     res.cookie("token", token);
 
-    res.status(201).json({ message: "User created successfully", token });
+    delete newUser._doc.password;
+
+    res
+      .status(201)
+      .json({ message: "User created successfully", newUser, token });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -35,7 +39,7 @@ module.exports.registerUser = async (req, res) => {
 module.exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await userModel.findOne({ email: email }).select(+password);
+    const user = await userModel.findOne({ email: email }).select("+password");
 
     if (!user) {
       return res.status(400).json({ message: "Invalid Email or Password" });
@@ -52,7 +56,22 @@ module.exports.loginUser = async (req, res) => {
 
     res.cookie("token", token);
 
-    res.status(200).json({ message: "Login successful", token });
+    delete user._doc.password;
+
+    res.status(200).json({ message: "Login successful", user, token });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports.getUserProfile = async (req, res) => {
+  try {
+    const user = req.user;
+
+    res.status(200).json({
+      message: "User profile fetched successfully",
+      user,
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -66,18 +85,6 @@ module.exports.logoutUser = async (req, res) => {
 
     res.clearCookie("token");
     res.status(200).json({ message: "Logout successful" });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-module.exports.getUserProfile = async (req, res) => {
-  try {
-    const user = req.user;
-
-    res.status(200).json({
-      message: "User profile fetched successfully", user
-    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
