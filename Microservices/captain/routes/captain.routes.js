@@ -16,5 +16,10 @@ router.patch(
   authMiddleware.captainAuth,
   captainController.updateCaptainStatus
 );
+router.get(
+  "/new-ride",
+  authMiddleware.captainAuth,
+  captainController.waitForNewRides
+);
 
 module.exports = router;

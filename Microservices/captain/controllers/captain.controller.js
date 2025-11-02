@@ -4,6 +4,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { subscribeToQueue, publishToQueue } = require("../services/rabbit");
 
+const pendingRequests = [];
+
 module.exports.registerCaptain = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -118,6 +120,19 @@ module.exports.updateCaptainStatus = async (req, res) => {
   }
 };
 
+module.exports.waitForNewRides = async (req, res) => {
+  req.setTimeout(30000, () => {
+    res.status(204).end();
+  });
+
+  pendingRequests.push(res);
+};
+
 subscribeToQueue("new-ride", (data) => {
-  console.log("New ride received in captain service:", JSON.parse(data));
+  const rideData = JSON.parse(data);
+  
+  pendingRequests.forEach((res) => {
+    res.json({ message: "New ride request", ride: rideData });
+  });
+  pendingRequests.length = 0;
 });

@@ -2,6 +2,10 @@ const userModel = require("../models/user.model");
 const blacklistTokenModel = require("../models/blacklisttoken.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { set } = require("mongoose");
+const { subscribeToQueue } = require("../../ride/services/rabbit");
+const EventEmitter = require("events");
+const rideEventEmitter = new EventEmitter();
 
 module.exports.registerUser = async (req, res) => {
   try {
@@ -95,3 +99,18 @@ module.exports.logoutUser = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+module.exports.acceptedRides = async (req, res) => {
+  rideEventEmitter.once("ride-accepted", (data) => {
+    res.send(data);
+  });
+
+  setTimeout(() => {
+    res.status(204).end();
+  }, 30000);
+};
+
+subscribeToQueue("ride-accepted", async (msg) => {
+  const rideData = JSON.parse(msg);
+  rideEventEmitter.emit("ride-accepted", rideData);
+});
