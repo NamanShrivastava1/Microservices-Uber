@@ -2,6 +2,7 @@ const captainModel = require("../models/captain.model");
 const blacklistTokenModel = require("../models/blacklisttoken.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { subscribeToQueue, publishToQueue } = require("../services/rabbit");
 
 module.exports.registerCaptain = async (req, res) => {
   try {
@@ -116,3 +117,7 @@ module.exports.updateCaptainStatus = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+subscribeToQueue("new-ride", (data) => {
+  console.log("New ride received in captain service:", JSON.parse(data));
+});

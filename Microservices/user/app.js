@@ -11,6 +11,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const userRoutes = require('./routes/user.routes');
+const rabbitMq = require('./services/rabbit');
+rabbitMq.connect();
 
 app.use('/', userRoutes);
 
